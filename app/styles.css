@@ -1155,6 +1155,13 @@ textarea {
 
 .chart-card {
   padding: 18px;
+  max-height: 380px;
+  overflow: hidden;
+}
+
+.chart-card canvas {
+  max-height: 250px !important;
+  width: 100% !important;
 }
 
 .chart-card h4 {

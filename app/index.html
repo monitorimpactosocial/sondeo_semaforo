@@ -639,16 +639,16 @@
 
           <!-- Charts -->
           <div class="charts-grid" style="margin-top:16px;">
-            <div class="glass chart-card">
+            <div class="glass chart-card" style="height:320px;">
               <h4>
                 <svg viewBox="0 0 24 24">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                 </svg>
                 Evolución Temporal
               </h4>
-              <canvas id="chartTimeline" height="200"></canvas>
+              <div style="position:relative;height:240px;"><canvas id="chartTimeline"></canvas></div>
             </div>
-            <div class="glass chart-card">
+            <div class="glass chart-card" style="height:320px;">
               <h4>
                 <svg viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10" />
@@ -656,9 +656,9 @@
                 </svg>
                 Distribución Semáforo
               </h4>
-              <canvas id="chartAlerts" height="200"></canvas>
+              <div style="position:relative;height:240px;"><canvas id="chartAlerts"></canvas></div>
             </div>
-            <div class="glass chart-card" style="grid-column: span 2;">
+            <div class="glass chart-card" style="grid-column: span 2;height:320px;">
               <h4>
                 <svg viewBox="0 0 24 24">
                   <line x1="18" y1="20" x2="18" y2="10" />
@@ -667,7 +667,7 @@
                 </svg>
                 Temas Más Frecuentes
               </h4>
-              <canvas id="chartDims" height="180"></canvas>
+              <div style="position:relative;height:240px;"><canvas id="chartDims"></canvas></div>
             </div>
           </div>
 

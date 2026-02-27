@@ -723,7 +723,7 @@ function renderCharts(s) {
       labels: days.map(d => d.slice(5)),
       datasets: [{ label: 'Puntaje Diario', data: days.map(d => byDay[d]), borderColor: '#0a4d3c', backgroundColor: 'rgba(10,77,60,.1)', fill: true, tension: .35, pointRadius: 3 }]
     },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
   });
 
   const sample = s.sample || [];

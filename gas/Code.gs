@@ -12,6 +12,7 @@
 
 const CFG = {
   SPREADSHEET_ID: '1viXJfHTebeCyStJkAkA4uRdNXa4FgHgsomcmhlxNB0k',
+  DRIVE_FOLDER_ID: '18wON9jpIor8UfFAoh4pw95FHHI7rVKLx',
   SHEET_USERS: 'usuarios',
   SHEET_QUESTIONS: 'preguntas',
   SHEET_RESPONSES: 'respuestas',
@@ -26,7 +27,7 @@ const CFG = {
     'P11','tema_origen','P14','P14_otro',
     'P18','P19','comentario',
     'semaforo_color','semaforo_score','semaforo_confiabilidad',
-    'gps_lat','gps_lng'
+    'gps_lat','gps_lng','evidencia_url'
   ]
 };
 
@@ -137,6 +138,18 @@ function apiSubmit_(p) {
   const ts = new Date();
   const id_encuesta = String(p.id_encuesta || Utilities.getUuid());
 
+  // Save photo/evidence to Google Drive if present
+  let evidencia_url = '';
+  const fotoData = String(a.foto_base64 || '');
+  if (fotoData && fotoData.startsWith('data:')) {
+    try {
+      evidencia_url = saveFileToDrive_(fotoData, id_encuesta, ses.usuario, ts);
+    } catch (e) {
+      // Log error but don't fail the submission
+      Logger.log('Error saving file to Drive: ' + e.message);
+    }
+  }
+
   // Build row matching RESP_HEADERS
   const row = [
     ts,
@@ -167,12 +180,13 @@ function apiSubmit_(p) {
     sem.score !== null && sem.score !== undefined ? Number(sem.score) : '',
     sem.confiabilidad !== undefined ? Number(sem.confiabilidad) : '',
     a.gps_lat !== undefined && a.gps_lat !== '' ? Number(a.gps_lat) : '',
-    a.gps_lng !== undefined && a.gps_lng !== '' ? Number(a.gps_lng) : ''
+    a.gps_lng !== undefined && a.gps_lng !== '' ? Number(a.gps_lng) : '',
+    evidencia_url
   ];
 
   appendRowsSafe_(CFG.SHEET_RESPONSES, [row]);
 
-  return { ok:true, id_encuesta };
+  return { ok:true, id_encuesta, evidencia_url };
 }
 
 function apiDashboardSummary_(p) {
@@ -558,4 +572,42 @@ function sum_(arr) {
 function round_(x, d) {
   const p = Math.pow(10, Number(d || 0));
   return Math.round(Number(x || 0) * p) / p;
+}
+
+/* =========================
+ * Google Drive file upload
+ * ========================= */
+
+function saveFileToDrive_(dataUrl, idEncuesta, usuario, ts) {
+  // Parse data URL: data:image/jpeg;base64,/9j/4AAQ...
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error('Formato de archivo inválido.');
+
+  const mimeType = match[1];
+  const base64Data = match[2];
+  const bytes = Utilities.base64Decode(base64Data);
+  const blob = Utilities.newBlob(bytes, mimeType);
+
+  // Determine file extension
+  const extMap = {
+    'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png',
+    'image/gif': 'gif', 'image/webp': 'webp', 'image/heic': 'heic',
+    'application/pdf': 'pdf', 'video/mp4': 'mp4', 'audio/mpeg': 'mp3',
+    'audio/ogg': 'ogg', 'audio/webm': 'webm'
+  };
+  const ext = extMap[mimeType] || 'bin';
+
+  // Build descriptive filename
+  const dateStr = Utilities.formatDate(ts, Session.getScriptTimeZone(), 'yyyyMMdd_HHmmss');
+  const fileName = `${dateStr}_${usuario}_${idEncuesta.slice(0, 8)}.${ext}`;
+  blob.setName(fileName);
+
+  // Get or use target folder
+  const folder = DriveApp.getFolderById(CFG.DRIVE_FOLDER_ID);
+  const file = folder.createFile(blob);
+
+  // Set sharing: anyone with link can view
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+  return file.getUrl();
 }
