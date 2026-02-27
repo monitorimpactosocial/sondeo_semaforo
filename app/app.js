@@ -18,7 +18,6 @@ const UI = {
 
   netPill: document.getElementById('netPill'),
   appTitle: document.getElementById('appTitle'),
-  logo: document.getElementById('logo'),
 
   tabForm: document.getElementById('tabForm'),
   tabDash: document.getElementById('tabDash'),
@@ -61,6 +60,7 @@ const UI = {
   resYellow: document.getElementById('resYellow'),
   resRed: document.getElementById('resRed'),
   resTitle: document.getElementById('resTitle'),
+  resBadge: document.getElementById('resBadge'),
   resMeta: document.getElementById('resMeta'),
   resConf: document.getElementById('resConf'),
 
@@ -83,6 +83,7 @@ const UI = {
   lightYellow: document.getElementById('lightYellow'),
   lightRed: document.getElementById('lightRed'),
   semTitle: document.getElementById('semTitle'),
+  semBadge: document.getElementById('semBadge'),
   semMeta: document.getElementById('semMeta'),
   semExplain: document.getElementById('semExplain'),
   kpis: document.getElementById('kpis'),
@@ -120,9 +121,9 @@ function escapeHtml(s) {
 function isOnline() { return navigator.onLine; }
 
 function updateNetPill() {
-  UI.netPill.textContent = isOnline() ? 'Online' : 'Offline';
-  UI.netPill.style.background = isOnline() ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)';
-  UI.netPill.style.borderColor = isOnline() ? 'rgba(34,197,94,.35)' : 'rgba(239,68,68,.35)';
+  const online = isOnline();
+  UI.netPill.textContent = online ? '● Online' : '○ Offline';
+  UI.netPill.className = 'badge ' + (online ? 'pill-online' : 'pill-offline');
 }
 
 async function api(action, body) {
@@ -147,11 +148,9 @@ async function init() {
     try { await navigator.serviceWorker.register('./sw.js'); } catch (e) { }
   }
 
-  await loadConfig();
   await loadSessionFromCache();
   await refreshPendingCount();
 
-  // Set P01 to current date/time
   setP01Now();
 
   // Auth buttons
@@ -174,13 +173,11 @@ async function init() {
     if (STATE.dashData) renderDashboard(STATE.dashData);
   });
 
-  // GPS
+  // GPS & Photo
   UI.btnGPS.addEventListener('click', captureGPS);
-
-  // Photo
   UI.P20Foto.addEventListener('change', capturePhoto);
 
-  // Skip logic listeners
+  // Skip logic
   setupSkipLogic();
 }
 
@@ -196,7 +193,7 @@ function setP01Now() {
  * =========================== */
 
 function setupSkipLogic() {
-  // P02 "Otro" toggle
+  // P02 "Otro"
   UI.P02.addEventListener('change', () => {
     UI.P02OtroWrap.classList.toggle('hidden', UI.P02.value !== 'Otro');
   });
@@ -206,7 +203,7 @@ function setupSkipLogic() {
     cb.addEventListener('change', () => updateP08Logic());
   });
 
-  // P11 "Otro" toggle
+  // P11 "Otro"
   UI.P11.addEventListener('change', () => {
     UI.P11OtroWrap.classList.toggle('hidden', UI.P11.value !== 'Otro');
   });
@@ -214,12 +211,11 @@ function setupSkipLogic() {
   // tema_origen → toggle P14
   document.querySelectorAll('input[name="tema_origen"]').forEach(r => {
     r.addEventListener('change', () => {
-      const v = getRadio('tema_origen');
-      UI.wrapP14.classList.toggle('hidden', v !== 'Rumores');
+      UI.wrapP14.classList.toggle('hidden', getRadio('tema_origen') !== 'Rumores');
     });
   });
 
-  // P14 "Otro" toggle
+  // P14 "Otro"
   document.querySelectorAll('[data-p14]').forEach(cb => {
     cb.addEventListener('change', () => {
       const otroChecked = document.querySelector('[data-p14][value="Otro"]:checked');
@@ -227,7 +223,7 @@ function setupSkipLogic() {
     });
   });
 
-  // P18 "Otro" toggle
+  // P18 "Otro"
   document.querySelectorAll('input[name="P18"]').forEach(r => {
     r.addEventListener('change', () => {
       UI.P18OtroWrap.classList.toggle('hidden', getRadio('P18') !== 'Otro');
@@ -237,11 +233,9 @@ function setupSkipLogic() {
 
 function updateP08Logic() {
   const checked = Array.from(document.querySelectorAll('[data-p08]:checked')).map(c => c.value);
-  const onlyG = checked.length === 1 && checked[0] === 'G';
-  const hasNone = checked.length === 0;
   const hasACD = checked.some(v => ['A', 'C', 'D'].includes(v));
 
-  // If G is checked, uncheck others
+  // G exclusion logic
   if (checked.includes('G') && checked.length > 1) {
     document.querySelectorAll('[data-p08]:checked').forEach(cb => {
       if (cb.value !== 'G') cb.checked = false;
@@ -250,20 +244,18 @@ function updateP08Logic() {
     UI.wrapP10.classList.add('hidden');
     return;
   }
-
-  // If any non-G is checked, uncheck G
   if (!checked.includes('G') && checked.length > 0) {
     UI.P08G.checked = false;
   }
 
-  // Show/hide P09 and P10
+  const onlyG = checked.length === 1 && checked[0] === 'G';
+  const hasNone = checked.length === 0;
+
   if (onlyG || hasNone) {
     UI.wrapP09.classList.add('hidden');
     UI.wrapP10.classList.add('hidden');
   } else {
-    // Show P10 always if any alert selected
     UI.wrapP10.classList.remove('hidden');
-    // Show P09 only if A, C, or D
     UI.wrapP09.classList.toggle('hidden', !hasACD);
   }
 }
@@ -283,9 +275,7 @@ function captureGPS() {
       STATE.gps = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
       UI.gpsResult.textContent = `📍 ${STATE.gps.lat.toFixed(5)}, ${STATE.gps.lng.toFixed(5)} (±${Math.round(STATE.gps.accuracy)}m)`;
     },
-    err => {
-      UI.gpsResult.textContent = 'Error GPS: ' + err.message;
-    },
+    err => { UI.gpsResult.textContent = 'Error GPS: ' + err.message; },
     { enableHighAccuracy: true, timeout: 15000 }
   );
 }
@@ -314,16 +304,13 @@ function getCheckboxes(attr) {
 function collectAnswers() {
   const P08 = getCheckboxes('data-p08');
   const P14 = getCheckboxes('data-p14');
-
-  const tipo_informante = UI.P02.value === 'Otro' ? (UI.P02Otro.value.trim() || 'Otro') : UI.P02.value;
-
+  const tipo = UI.P02.value === 'Otro' ? (UI.P02Otro.value.trim() || 'Otro') : UI.P02.value;
   const P11val = UI.P11.value === 'Otro' ? (UI.P11Otro.value.trim() || 'Otro') : UI.P11.value;
-
   const P18val = getRadio('P18') === 'Otro' ? (UI.P18Otro.value.trim() || 'Otro') : getRadio('P18');
 
   return {
     P01: UI.P01.value,
-    tipo_informante,
+    tipo_informante: tipo,
     zona_depto: UI.P03Depto.value,
     zona_distrito: UI.P03Distrito.value.trim(),
     zona_comunidad: UI.P03Comunidad.value.trim(),
@@ -338,7 +325,7 @@ function collectAnswers() {
     P11: P11val,
     tema_origen: getRadio('tema_origen'),
     P14: P14.join('|'),
-    P14_otro: (P14.includes('Otro') ? (UI.P14Otro ? UI.P14Otro.value.trim() : '') : ''),
+    P14_otro: P14.includes('Otro') ? (UI.P14Otro ? UI.P14Otro.value.trim() : '') : '',
     P18: P18val,
     P19: UI.P19.value.trim(),
     comentario: UI.metaComentario.value.trim(),
@@ -349,76 +336,50 @@ function collectAnswers() {
 }
 
 /* ===========================
- * Semáforo Calculation (client)
+ * Semáforo Calculation
  * =========================== */
 
 function computeSemaforo(answers) {
   const P05 = Number(answers.P05 || 0);
   const P06 = answers.P06;
-  const P07 = answers.P07;
   const P08 = (answers.P08 || '').split('|').filter(Boolean);
   const P09 = answers.P09;
   const P10 = answers.P10;
 
-  // 6.1 Red triggers
   let isRed = false;
   let triggers = [];
 
-  // P08 has C, D, or F
   if (['C', 'D', 'F'].some(v => P08.includes(v))) {
     isRed = true;
-    triggers.push('P08 marcó C, D o F (corte, protesta, quejas contratistas)');
+    triggers.push('P08 marcó C, D o F');
   }
-
-  // P10 = Rojo
   if (P10 === 'Rojo') {
     isRed = true;
-    triggers.push('P10 = Rojo (urgente hoy o mañana)');
+    triggers.push('P10 = Rojo');
   }
-
-  // P09 = Alta AND P05 >= 4
   if (P09 === 'Alta' && P05 >= 4) {
     isRed = true;
-    triggers.push('P09 = Alta y P05 ≥ 4 (tenso o muy tenso)');
+    triggers.push('P09 = Alta y P05 ≥ 4');
   }
 
   if (isRed) {
-    return {
-      color: 'ROJO',
-      score: null,
-      triggers,
-      confiabilidad: getConfiabilidad(P07)
-    };
+    return { color: 'ROJO', score: null, triggers, confiabilidad: getConfiabilidad(answers.P07) };
   }
 
-  // 6.2 Score calculation
   let score = 0;
-
-  // P05: 1→0, 2→1, 3→2, 4→3, 5→4
   score += Math.max(0, P05 - 1);
-
-  // P06: mejoró 0, igual 1, empeoró 2
   if (P06 === 'Sigue igual') score += 1;
   else if (P06 === 'Empeoró') score += 2;
-
-  // P08: A or B or E → 1 each (max 3)
   let p08Score = 0;
   ['A', 'B', 'E'].forEach(v => { if (P08.includes(v)) p08Score++; });
   score += Math.min(p08Score, 3);
-
-  // P12, P13, P15 not in questionnaire — default 0
 
   let color;
   if (score <= 3) color = 'VERDE';
   else if (score <= 7) color = 'AMARILLO';
   else color = 'ROJO';
 
-  return {
-    color,
-    score,
-    triggers: [],
-    confiabilidad: getConfiabilidad(P07)
-  };
+  return { color, score, triggers: [], confiabilidad: getConfiabilidad(answers.P07) };
 }
 
 function getConfiabilidad(P07) {
@@ -431,20 +392,26 @@ function getConfiabilidad(P07) {
 function showSemaforoResult(sem) {
   UI.semaforoResult.classList.remove('hidden');
 
-  UI.resGreen.className = 'light';
-  UI.resYellow.className = 'light';
-  UI.resRed.className = 'light';
+  // Reset lights
+  UI.resRed.className = 'tl-light';
+  UI.resYellow.className = 'tl-light';
+  UI.resGreen.className = 'tl-light';
 
-  if (sem.color === 'VERDE') UI.resGreen.className = 'light on green';
-  if (sem.color === 'AMARILLO') UI.resYellow.className = 'light on yellow';
-  if (sem.color === 'ROJO') UI.resRed.className = 'light on red';
+  // Activate correct light
+  if (sem.color === 'ROJO') UI.resRed.className = 'tl-light on-red';
+  if (sem.color === 'AMARILLO') UI.resYellow.className = 'tl-light on-yellow';
+  if (sem.color === 'VERDE') UI.resGreen.className = 'tl-light on-green';
 
-  UI.resTitle.textContent = 'Resultado: ' + sem.color;
+  UI.resTitle.textContent = 'Resultado del Semáforo';
 
-  let metaText = '';
-  if (sem.score !== null) metaText = `Puntaje: ${sem.score}`;
-  if (sem.triggers.length) metaText += (metaText ? ' | ' : '') + sem.triggers.join('; ');
-  UI.resMeta.textContent = metaText;
+  // Badge
+  const badgeClass = sem.color === 'ROJO' ? 'sem-badge-rojo' : sem.color === 'AMARILLO' ? 'sem-badge-amarillo' : 'sem-badge-verde';
+  UI.resBadge.innerHTML = `<span class="sem-badge ${badgeClass}">${sem.color}</span>`;
+
+  let detail = '';
+  if (sem.score !== null) detail = `Puntaje: ${sem.score}`;
+  if (sem.triggers.length) detail += (detail ? ' · ' : '') + sem.triggers.join('; ');
+  UI.resMeta.textContent = detail;
   UI.resConf.textContent = `Confiabilidad: ${sem.confiabilidad}`;
 }
 
@@ -458,21 +425,19 @@ function validateForm(answers) {
   if (!answers.zona_depto) errors.push('P03: Seleccione departamento');
   if (!answers.tipo_lugar) errors.push('P04: Seleccione tipo de lugar');
   if (!answers.P05) errors.push('P05: Seleccione ambiente social');
-  if (!answers.P06) errors.push('P06: Seleccione tendencia del ambiente');
-  if (!answers.P07) errors.push('P07: Seleccione nivel de certeza');
-  if (!answers.P08) errors.push('P08: Seleccione al menos una señal de alerta');
+  if (!answers.P06) errors.push('P06: Seleccione tendencia');
+  if (!answers.P07) errors.push('P07: Seleccione certeza');
+  if (!answers.P08) errors.push('P08: Seleccione al menos una señal');
   if (!answers.P11) errors.push('P11: Seleccione tema principal');
-  if (!answers.tema_origen) errors.push('Origen: Seleccione tipo de origen');
-  if (!answers.P18) errors.push('P18: Seleccione acción recomendada');
+  if (!answers.tema_origen) errors.push('Origen: Seleccione tipo');
+  if (!answers.P18) errors.push('P18: Seleccione acción');
 
-  // Conditional validations
   const P08list = (answers.P08 || '').split('|').filter(Boolean);
   const hasACD = P08list.some(v => ['A', 'C', 'D'].includes(v));
   const onlyG = P08list.length === 1 && P08list[0] === 'G';
 
-  if (hasACD && !answers.P09) errors.push('P09: Seleccione probabilidad de repetición');
-  if (!onlyG && P08list.length > 0 && !answers.P10) errors.push('P10: Seleccione nivel de intervención');
-
+  if (hasACD && !answers.P09) errors.push('P09: Seleccione probabilidad');
+  if (!onlyG && P08list.length > 0 && !answers.P10) errors.push('P10: Seleccione intervención');
   return errors;
 }
 
@@ -483,13 +448,8 @@ function validateForm(answers) {
 function buildPayload() {
   const answers = collectAnswers();
   const sem = computeSemaforo(answers);
-  const id_encuesta = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(16).slice(2);
-
-  return {
-    id_encuesta,
-    answers,
-    semaforo: sem
-  };
+  const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '_' + Math.random().toString(16).slice(2);
+  return { id_encuesta: id, answers, semaforo: sem };
 }
 
 /* ===========================
@@ -499,25 +459,12 @@ function buildPayload() {
 async function saveLocalOnly() {
   setMsg(UI.formMsg, '');
   if (!STATE.session) { setMsg(UI.formMsg, 'Debe iniciar sesión.', 'bad'); return; }
-
   const answers = collectAnswers();
   const errors = validateForm(answers);
-  if (errors.length) {
-    setMsg(UI.formMsg, 'Campos obligatorios faltantes:\n' + errors.join('\n'), 'bad');
-    return;
-  }
-
+  if (errors.length) { setMsg(UI.formMsg, errors.join('\n'), 'bad'); return; }
   const payload = buildPayload();
   showSemaforoResult(payload.semaforo);
-
-  await IDB.put(IDB.STORE_PENDING, {
-    local_id: payload.id_encuesta,
-    created_at: new Date().toISOString(),
-    status: 'pending',
-    token: STATE.session.token,
-    payload
-  });
-
+  await IDB.put(IDB.STORE_PENDING, { local_id: payload.id_encuesta, created_at: new Date().toISOString(), status: 'pending', token: STATE.session.token, payload });
   await refreshPendingCount();
   setMsg(UI.formMsg, 'Guardado localmente. Se enviará al volver la conexión.', 'ok');
 }
@@ -525,32 +472,14 @@ async function saveLocalOnly() {
 async function sendNow() {
   setMsg(UI.formMsg, '');
   if (!STATE.session) { setMsg(UI.formMsg, 'Debe iniciar sesión.', 'bad'); return; }
-
   const answers = collectAnswers();
   const errors = validateForm(answers);
-  if (errors.length) {
-    setMsg(UI.formMsg, 'Campos obligatorios faltantes:\n' + errors.join('\n'), 'bad');
-    return;
-  }
-
+  if (errors.length) { setMsg(UI.formMsg, errors.join('\n'), 'bad'); return; }
   const payload = buildPayload();
   showSemaforoResult(payload.semaforo);
-
-  await IDB.put(IDB.STORE_PENDING, {
-    local_id: payload.id_encuesta,
-    created_at: new Date().toISOString(),
-    status: 'pending',
-    token: STATE.session.token,
-    payload
-  });
-
+  await IDB.put(IDB.STORE_PENDING, { local_id: payload.id_encuesta, created_at: new Date().toISOString(), status: 'pending', token: STATE.session.token, payload });
   await refreshPendingCount();
-
-  if (!isOnline()) {
-    setMsg(UI.formMsg, 'Sin conexión. Quedó en pendientes.', 'warn');
-    return;
-  }
-
+  if (!isOnline()) { setMsg(UI.formMsg, 'Sin conexión. Quedó en pendientes.', 'warn'); return; }
   await syncPending(false);
 }
 
@@ -560,50 +489,32 @@ async function sendNow() {
 
 async function syncPending(silent) {
   if (!STATE.session) return;
-
   const items = await IDB.listPending(500);
   const pending = items.filter(x => x && x.status === 'pending');
-
   if (!pending.length) {
     await refreshPendingCount();
     if (!silent) setMsg(UI.formMsg, 'No hay pendientes.', 'ok');
     return;
   }
-
   if (!isOnline()) {
     await refreshPendingCount();
-    if (!silent) setMsg(UI.formMsg, 'Sin conexión, no se puede sincronizar.', 'warn');
+    if (!silent) setMsg(UI.formMsg, 'Sin conexión.', 'warn');
     return;
   }
 
-  let okN = 0;
-  let badN = 0;
-
+  let okN = 0, badN = 0;
   for (const it of pending) {
     try {
-      const res = await api('submit', {
-        token: it.token,
-        id_encuesta: it.payload.id_encuesta,
-        answers: it.payload.answers,
-        semaforo: it.payload.semaforo
-      });
-      if (res && res.ok) {
-        okN += 1;
-        await IDB.del(IDB.STORE_PENDING, it.local_id);
-      } else {
-        badN += 1;
-      }
-    } catch (e) {
-      badN += 1;
-    }
+      const res = await api('submit', { token: it.token, id_encuesta: it.payload.id_encuesta, answers: it.payload.answers, semaforo: it.payload.semaforo });
+      if (res && res.ok) { okN++; await IDB.del(IDB.STORE_PENDING, it.local_id); }
+      else badN++;
+    } catch (e) { badN++; }
   }
-
   await refreshPendingCount();
   UI.lastSync.textContent = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
   if (!silent) {
     if (badN === 0) setMsg(UI.formMsg, `Sincronización completa. Enviados=${okN}.`, 'ok');
-    else setMsg(UI.formMsg, `Sincronización parcial. Enviados=${okN}, fallidos=${badN}.`, 'warn');
+    else setMsg(UI.formMsg, `Parcial. Enviados=${okN}, fallidos=${badN}.`, 'warn');
   }
 }
 
@@ -614,27 +525,8 @@ async function refreshPendingCount() {
 }
 
 /* ===========================
- * Config & Session
+ * Session
  * =========================== */
-
-async function loadConfig() {
-  if (!isOnline()) {
-    const cached = await IDB.get(IDB.STORE_CACHE, 'config');
-    if (cached && cached.value) { applyConfig(cached.value); return; }
-  }
-  try {
-    const cfg = await api('config', {});
-    if (cfg && cfg.ok) {
-      applyConfig(cfg);
-      await IDB.put(IDB.STORE_CACHE, { key: 'config', value: cfg, saved_at: new Date().toISOString() });
-    }
-  } catch (e) { }
-}
-
-function applyConfig(cfg) {
-  if (cfg.app_title) UI.appTitle.textContent = cfg.app_title;
-  UI.logo.src = cfg.logo_url || 'https://i.postimg.cc/SNHrYXDV/logo-PARACEL.jpg';
-}
 
 async function loadSessionFromCache() {
   const s = await IDB.get(IDB.STORE_CACHE, 'session');
@@ -654,43 +546,29 @@ async function login() {
   setMsg(UI.loginMsg, '');
   const usuario = UI.loginUser.value.trim();
   const password = UI.loginPass.value;
-
-  if (!usuario || !password) {
-    setMsg(UI.loginMsg, 'Debe completar usuario y contraseña.', 'bad');
-    return;
-  }
-  if (!isOnline()) {
-    setMsg(UI.loginMsg, 'Sin conexión. El primer login requiere conexión.', 'warn');
-    return;
-  }
+  if (!usuario || !password) { setMsg(UI.loginMsg, 'Complete usuario y contraseña.', 'bad'); return; }
+  if (!isOnline()) { setMsg(UI.loginMsg, 'El primer login requiere conexión.', 'warn'); return; }
   UI.btnLogin.disabled = true;
   try {
     const res = await api('login', { usuario, password });
-    if (!res.ok) {
-      setMsg(UI.loginMsg, res.error || 'Login inválido.', 'bad');
-      return;
-    }
+    if (!res.ok) { setMsg(UI.loginMsg, res.error || 'Login inválido.', 'bad'); return; }
     await persistSession(res.session);
     showApp();
     if (STATE.session.can_dashboard) UI.tabDash.style.display = 'inline-flex';
     else UI.tabDash.style.display = 'none';
     setTab('form');
     await syncPending(true);
-  } catch (e) {
-    setMsg(UI.loginMsg, 'Error de red al autenticar.', 'bad');
-  } finally {
-    UI.btnLogin.disabled = false;
-  }
+  } catch (e) { setMsg(UI.loginMsg, 'Error de red.', 'bad'); }
+  finally { UI.btnLogin.disabled = false; }
 }
 
 async function logout() {
   STATE.session = null;
   await IDB.del(IDB.STORE_CACHE, 'session');
   UI.cardApp.style.display = 'none';
-  UI.cardLogin.style.display = 'block';
+  UI.cardLogin.style.display = '';
   UI.btnLogout.style.display = 'none';
   UI.tabDash.style.display = 'none';
-  setMsg(UI.loginMsg, 'Sesión finalizada.', 'ok');
 }
 
 function showApp() {
@@ -720,46 +598,47 @@ function setTab(which) {
 async function loadDashboard() {
   setMsg(UI.dashMsg, '');
   if (!STATE.session) { setMsg(UI.dashMsg, 'Debe iniciar sesión.', 'bad'); return; }
-  if (!STATE.session.can_dashboard) { setMsg(UI.dashMsg, 'No autorizado para tablero.', 'bad'); return; }
-  if (!isOnline()) { setMsg(UI.dashMsg, 'Tablero requiere conexión.', 'warn'); return; }
-
+  if (!STATE.session.can_dashboard) { setMsg(UI.dashMsg, 'No autorizado.', 'bad'); return; }
+  if (!isOnline()) { setMsg(UI.dashMsg, 'Requiere conexión.', 'warn'); return; }
   UI.btnDash.disabled = true;
   try {
-    const window_days = Number(UI.dashWindow.value || 30);
-    const tipo_informante = UI.dashTipo.value.trim();
-    const comunidad = UI.dashComunidad.value.trim();
-
-    const res = await api('dashboard_summary', { token: STATE.session.token, window_days, tipo_informante, comunidad });
-    if (!res.ok) { setMsg(UI.dashMsg, res.error || 'Error tablero.', 'bad'); return; }
+    const res = await api('dashboard_summary', {
+      token: STATE.session.token,
+      window_days: Number(UI.dashWindow.value || 30),
+      tipo_informante: UI.dashTipo.value.trim(),
+      comunidad: UI.dashComunidad.value.trim()
+    });
+    if (!res.ok) { setMsg(UI.dashMsg, res.error || 'Error.', 'bad'); return; }
     STATE.dashData = res.summary;
     renderDashboard(res.summary);
     setMsg(UI.dashMsg, 'Tablero actualizado.', 'ok');
-  } catch (e) {
-    setMsg(UI.dashMsg, 'Error de red al cargar tablero.', 'bad');
-  } finally {
-    UI.btnDash.disabled = false;
-  }
+  } catch (e) { setMsg(UI.dashMsg, 'Error de red.', 'bad'); }
+  finally { UI.btnDash.disabled = false; }
 }
 
 function setSemaphore(sema) {
-  UI.lightGreen.className = 'light';
-  UI.lightYellow.className = 'light';
-  UI.lightRed.className = 'light';
+  UI.lightRed.className = 'tl-light';
+  UI.lightYellow.className = 'tl-light';
+  UI.lightGreen.className = 'tl-light';
 
   if (!sema) {
-    UI.semTitle.textContent = 'Semáforo';
+    UI.semTitle.textContent = 'Estado Actual del Sistema';
+    UI.semBadge.innerHTML = '';
     UI.semMeta.textContent = 'Sin datos';
     UI.semExplain.textContent = '';
     return;
   }
-  const c = String(sema.color || 'VERDE').toUpperCase();
-  if (c === 'VERDE') UI.lightGreen.className = 'light on green';
-  if (c === 'AMARILLO') UI.lightYellow.className = 'light on yellow';
-  if (c === 'ROJO') UI.lightRed.className = 'light on red';
 
-  UI.semTitle.textContent = 'Semáforo: ' + c;
-  UI.semMeta.textContent = 'Promedio diario (puntaje): ' + String(sema.mean_daily_score ?? '');
-  const rationale = (sema.rationale || []).map(x => `${x.tipo}: ${x.detalle} (valor=${x.valor})`).join(' | ');
+  const c = String(sema.color || 'VERDE').toUpperCase();
+  if (c === 'VERDE') UI.lightGreen.className = 'tl-light on-green';
+  if (c === 'AMARILLO') UI.lightYellow.className = 'tl-light on-yellow';
+  if (c === 'ROJO') UI.lightRed.className = 'tl-light on-red';
+
+  UI.semTitle.textContent = 'Estado Actual del Sistema';
+  const badgeClass = c === 'ROJO' ? 'sem-badge-rojo' : c === 'AMARILLO' ? 'sem-badge-amarillo' : 'sem-badge-verde';
+  UI.semBadge.innerHTML = `<span class="sem-badge ${badgeClass}">SEMÁFORO ${c}</span>`;
+  UI.semMeta.textContent = 'Promedio diario: ' + String(sema.mean_daily_score ?? '');
+  const rationale = (sema.rationale || []).map(x => `${x.tipo}: ${x.detalle} (${x.valor})`).join(' | ');
   UI.semExplain.textContent = rationale;
 }
 
@@ -767,27 +646,32 @@ function renderDashboard(s) {
   if (!s) return;
   setSemaphore(s.semaforo);
 
-  const coms = (s.filter_values && s.filter_values.comunidades) ? s.filter_values.comunidades : [];
-  const current = UI.dashComunidad.value;
+  // Comunidades filter
+  const coms = (s.filter_values && s.filter_values.comunidades) || [];
+  const cur = UI.dashComunidad.value;
   UI.dashComunidad.innerHTML = [''].concat(coms).map(v => `<option value="${escapeHtml(v)}">${v ? escapeHtml(v) : '(todas)'}</option>`).join('');
-  if (coms.includes(current)) UI.dashComunidad.value = current;
+  if (coms.includes(cur)) UI.dashComunidad.value = cur;
 
   const qText = String(UI.dashSearch.value || '').toLowerCase().trim();
 
+  // KPIs
   const k = s.kpi || {};
-  const items = [
-    { label: 'Respuestas', value: k.n_rows },
-    { label: 'Encuestas', value: k.n_encuestas },
-    { label: 'Informantes', value: k.n_informantes },
-    { label: 'Puntaje promedio', value: k.avg_score },
-    { label: 'Ventana', value: s.window_days + ' días' },
-    { label: 'Rango', value: `${String(s.range.from).slice(5, 10)} / ${String(s.range.to).slice(5, 10)}` }
+  const kpiItems = [
+    { label: 'Respuestas', value: k.n_rows, color: '#10b981' },
+    { label: 'Encuestas', value: k.n_encuestas, color: '#2563eb' },
+    { label: 'Informantes', value: k.n_informantes, color: '#9333ea' },
+    { label: 'Score Prom.', value: k.avg_score, color: '#f59e0b' },
   ];
-  UI.kpis.innerHTML = items.map(it => `
-    <div class="kpi"><div class="klabel">${escapeHtml(it.label)}</div><div class="kval">${escapeHtml(String(it.value ?? ''))}</div></div>
+  UI.kpis.innerHTML = kpiItems.map(it => `
+    <div class="glass kpi">
+      <div class="kpi-bg" style="background:${it.color}"></div>
+      <div class="klabel">${escapeHtml(it.label)}</div>
+      <div class="kval">${escapeHtml(String(it.value ?? '—'))}</div>
+    </div>
   `).join('');
 
-  let sample = (s.sample || []);
+  // Table
+  let sample = s.sample || [];
   if (qText) {
     sample = sample.filter(r =>
       String(r.comunidad || '').toLowerCase().includes(qText) ||
@@ -796,22 +680,24 @@ function renderDashboard(s) {
       String(r.dimension || '').toLowerCase().includes(qText)
     );
   }
-
   sample = sample.slice(0, 500);
   UI.tableCount.textContent = sample.length + (sample.length === 500 ? '+' : '');
 
-  if (!sample.length) UI.dashTable.innerHTML = '<p class="muted" style="padding:16px;">Sin registros.</p>';
-  else {
-    let html = '<table><thead><tr><th style="min-width:140px;">Fecha</th><th>Informante</th><th>Comunidad</th><th>Dimensión</th><th>Pregunta</th><th>Respuesta</th><th>Pts</th></tr></thead><tbody>';
+  if (!sample.length) {
+    UI.dashTable.innerHTML = '<p class="muted" style="padding:16px;">Sin registros.</p>';
+  } else {
+    let html = '<table><thead><tr><th>Fecha</th><th>Informante</th><th>Comunidad</th><th>Tema</th><th>Respuesta</th><th>Semáforo</th></tr></thead><tbody>';
     sample.forEach(r => {
+      let scoreVal = Number(r.puntaje || 0);
+      let tlColor = scoreVal >= 2 ? 'rojo' : scoreVal === 1 ? 'amarillo' : 'verde';
+      let tlLabel = tlColor.charAt(0).toUpperCase() + tlColor.slice(1);
       html += `<tr>
-        <td>${escapeHtml(String(r.ts).slice(0, 16).replace('T', ' '))}</td>
+        <td>${escapeHtml(String(r.ts || '').slice(0, 16).replace('T', ' '))}</td>
         <td>${escapeHtml(r.tipo_informante || '')}</td>
         <td>${escapeHtml(r.comunidad || '')}</td>
         <td><b>${escapeHtml(r.dimension || '')}</b></td>
-        <td>${escapeHtml(r.pregunta || '')}</td>
         <td>${escapeHtml(r.respuesta || '')}</td>
-        <td>${escapeHtml(String(r.puntaje ?? ''))}</td>
+        <td><span class="tl-badge tl-badge-${tlColor}"><span class="tl-dot"></span>${tlLabel}</span></td>
       </tr>`;
     });
     html += '</tbody></table>';
@@ -823,87 +709,44 @@ function renderDashboard(s) {
 
 function renderCharts(s) {
   if (!window.Chart) return;
+  ['timeline', 'alerts', 'dims'].forEach(k => { if (STATE.charts[k]) STATE.charts[k].destroy(); });
 
-  ['timeline', 'alerts', 'dims'].forEach(k => {
-    if (STATE.charts[k]) { STATE.charts[k].destroy(); }
-  });
-
-  Chart.defaults.font.family = 'system-ui, sans-serif';
+  Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
   Chart.defaults.color = '#6b7280';
 
   const byDay = s.aggregates?.byDay || {};
   const days = Object.keys(byDay).sort();
-  const dayVals = days.map(d => byDay[d]);
 
   STATE.charts.timeline = new Chart(UI.chartTimeline, {
     type: 'line',
     data: {
       labels: days.map(d => d.slice(5)),
-      datasets: [{
-        label: 'Suma de Puntaje Diario',
-        data: dayVals,
-        borderColor: '#0a4d3c',
-        backgroundColor: 'rgba(10, 77, 60, 0.1)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 3
-      }]
+      datasets: [{ label: 'Puntaje Diario', data: days.map(d => byDay[d]), borderColor: '#0a4d3c', backgroundColor: 'rgba(10,77,60,.1)', fill: true, tension: .35, pointRadius: 3 }]
     },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
-    }
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
   });
 
   const sample = s.sample || [];
   let counts = { Verde: 0, Amarillo: 0, Rojo: 0 };
-  sample.forEach(r => {
-    if (r.puntaje >= 2) counts.Rojo++;
-    else if (r.puntaje === 1) counts.Amarillo++;
-    else counts.Verde++;
-  });
+  sample.forEach(r => { if (r.puntaje >= 2) counts.Rojo++; else if (r.puntaje === 1) counts.Amarillo++; else counts.Verde++; });
 
   STATE.charts.alerts = new Chart(UI.chartAlerts, {
     type: 'doughnut',
     data: {
-      labels: ['Verde (0 pts)', 'Amarillo (1 pt)', 'Rojo (≥2 pts)'],
-      datasets: [{
-        data: [counts.Verde, counts.Amarillo, counts.Rojo],
-        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
-        borderWidth: 0
-      }]
+      labels: ['Verde', 'Amarillo', 'Rojo'],
+      datasets: [{ data: [counts.Verde, counts.Amarillo, counts.Rojo], backgroundColor: ['#22c55e', '#eab308', '#ef4444'], borderWidth: 0 }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '65%',
-      plugins: { legend: { position: 'right' } }
-    }
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'right' } } }
   });
 
   const rank = (s.rankings && s.rankings.byDim) ? s.rankings.byDim.filter(r => r.dimension !== '(sin_dimension)') : [];
-
   STATE.charts.dims = new Chart(UI.chartDims, {
     type: 'bar',
     data: {
       labels: rank.map(r => r.dimension),
-      datasets: [{
-        label: 'Puntaje Total',
-        data: rank.map(r => r.puntaje),
-        backgroundColor: '#116b55',
-        borderRadius: 4
-      }]
+      datasets: [{ label: 'Frecuencia', data: rank.map(r => r.puntaje), backgroundColor: rank.map((_, i) => `hsl(160, 70%, ${30 + i * 5}%)`), borderRadius: 4 }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false } },
-        y: { beginAtZero: true }
-      }
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
   });
 }
 
