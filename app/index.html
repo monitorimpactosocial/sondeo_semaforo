@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a4d3c">
+  <meta name="description" content="PARACEL – Sondeo Semáforo: monitoreo de clima social y alerta temprana">
+  <title>PARACEL · Sondeo Semáforo</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <img id="logo" class="logo" alt="Paracel">
+    <div class="titleblock">
+      <div id="appTitle" class="title">PARACEL · SONDEO SEMÁFORO</div>
+      <div class="subtitle">Cuestionario breve para monitoreo de clima social y alerta temprana</div>
+    </div>
+    <div class="right">
+      <div id="netPill" class="pill">Offline</div>
+      <button id="btnLogout" class="btn secondary" style="display:none;">Salir</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- ============ LOGIN ============ -->
+    <section id="cardLogin" class="card">
+      <h2>Acceso</h2>
+      <p class="muted">Login simple. La columna <b>hash_password</b> puede contener contraseña en claro o SHA-256.</p>
+      <label>Usuario</label>
+      <input id="loginUser" autocomplete="username" placeholder="usuario">
+      <label>Contraseña</label>
+      <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••">
+      <div class="row">
+        <button id="btnLogin" class="btn">Ingresar</button>
+        <button id="btnClear" class="btn secondary">Limpiar</button>
+      </div>
+      <div id="loginMsg"></div>
+      <div class="hr"></div>
+      <p class="muted">Modo offline: la encuesta se guarda en el teléfono y se sincroniza al volver la conexión.</p>
+    </section>
+
+    <!-- ============ APP ============ -->
+    <section id="cardApp" class="card" style="display:none;">
+      <div class="tabs">
+        <button id="tabForm" class="tab active">Encuesta</button>
+        <button id="tabDash" class="tab" style="display:none;">Tablero</button>
+      </div>
+
+      <!-- ================== SURVEY FORM ================== -->
+      <section id="panelForm">
+        <h2>Sondeo Semáforo</h2>
+
+        <!-- Instructions -->
+        <div class="instructions-box">
+          <h3>📋 Instrucciones rápidas para la persona encuestadora</h3>
+          <ul>
+            <li>Leer la pregunta tal como está y marcar una opción.</li>
+            <li>Registrar hechos concretos cuando existan, y separar rumor de lo observado.</li>
+            <li>Si el resultado es <span class="tag-red">Rojo</span>, avisar de inmediato.</li>
+            <li>Completar las acciones con respeto, promoviendo un diálogo constructivo.</li>
+          </ul>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- ===== SECCIÓN 0: Identificación mínima ===== -->
+        <div class="section-header">
+          <span class="section-number">0</span>
+          <span>Identificación mínima <span class="tag-req">obligatorio</span></span>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P01</div><span class="muted">Automático</span></div>
+          <div class="qtext">Fecha y hora</div>
+          <input type="datetime-local" id="P01" readonly>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P02</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">Tipo de informante</div>
+          <select id="P02">
+            <option value="">Seleccione</option>
+            <option value="Miembro comunitario">Miembro comunitario</option>
+            <option value="Miembros de instituciones educativas">Miembros de instituciones educativas</option>
+            <option value="Miembros del equipo de Paracel">Miembros del equipo de Paracel</option>
+            <option value="Personas del área salud">Personas del área salud</option>
+            <option value="Comerciante">Comerciante</option>
+            <option value="Líder/lideresa local">Líder/lideresa local</option>
+            <option value="Empresa Contratista">Empresa Contratista (algún miembro)</option>
+            <option value="Autoridades municipales o departamentales">Autoridades municipales o departamentales</option>
+            <option value="Miembros de la función pública">Miembros de la función pública</option>
+            <option value="Miembros de la policía nacional">Miembros de la policía nacional</option>
+            <option value="Productor/a local">Productor/a local</option>
+            <option value="Organizaciones comunitarias y sociales">Organizaciones comunitarias y sociales</option>
+            <option value="Referentes religiosos">Referentes religiosos</option>
+            <option value="ONG">ONG</option>
+            <option value="Otro">Otro</option>
+          </select>
+          <div id="P02OtroWrap" class="hidden">
+            <label>Especifique:</label>
+            <input id="P02Otro" placeholder="Tipo de informante">
+          </div>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P03</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">Zona</div>
+          <div class="grid3">
+            <div>
+              <label>Departamento</label>
+              <select id="P03Depto">
+                <option value="">Seleccione</option>
+                <option value="Concepción">Concepción</option>
+                <option value="San Pedro">San Pedro</option>
+                <option value="Cordillera">Cordillera</option>
+                <option value="Guairá">Guairá</option>
+                <option value="Caaguazú">Caaguazú</option>
+                <option value="Caazapá">Caazapá</option>
+                <option value="Itapúa">Itapúa</option>
+                <option value="Misiones">Misiones</option>
+                <option value="Paraguarí">Paraguarí</option>
+                <option value="Alto Paraná">Alto Paraná</option>
+                <option value="Central">Central</option>
+                <option value="Ñeembucú">Ñeembucú</option>
+                <option value="Amambay">Amambay</option>
+                <option value="Canindeyú">Canindeyú</option>
+                <option value="Presidente Hayes">Presidente Hayes</option>
+                <option value="Boquerón">Boquerón</option>
+                <option value="Alto Paraguay">Alto Paraguay</option>
+                <option value="Asunción">Asunción</option>
+              </select>
+            </div>
+            <div>
+              <label>Distrito</label>
+              <input id="P03Distrito" placeholder="Nombre del distrito">
+            </div>
+            <div>
+              <label>Comunidad o Barrio</label>
+              <input id="P03Comunidad" placeholder="Nombre de comunidad o barrio">
+            </div>
+          </div>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P04</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">Tipo de lugar</div>
+          <div class="opts-grid">
+            <label class="opt-label"><input type="radio" name="P04" value="Comunidad indígena"><div class="indicator"></div><div>Comunidad indígena</div></label>
+            <label class="opt-label"><input type="radio" name="P04" value="Rural no indígena"><div class="indicator"></div><div>Rural no indígena</div></label>
+            <label class="opt-label"><input type="radio" name="P04" value="Urbano"><div class="indicator"></div><div>Urbano</div></label>
+            <label class="opt-label"><input type="radio" name="P04" value="Alojamientos"><div class="indicator"></div><div>Alojamientos</div></label>
+            <label class="opt-label"><input type="radio" name="P04" value="Áreas operacionales"><div class="indicator"></div><div>Áreas operacionales</div></label>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- ===== SECCIÓN 1: Estado general ===== -->
+        <div class="section-header">
+          <span class="section-number">1</span>
+          <span>Estado general <span class="muted">(núcleo del índice)</span></span>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P05</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">¿Cómo está el ambiente social hoy en la zona?</div>
+          <div class="muted">Si la respuesta es 4 o 5, prestar atención a señales de alerta en la sección 2.</div>
+          <div class="opts-grid" style="margin-top:10px;">
+            <label class="opt-label"><input type="radio" name="P05" value="1"><div class="indicator"></div><div>1 – Muy tranquilo</div></label>
+            <label class="opt-label"><input type="radio" name="P05" value="2"><div class="indicator"></div><div>2 – Tranquilo</div></label>
+            <label class="opt-label"><input type="radio" name="P05" value="3"><div class="indicator"></div><div>3 – Regular (normal, pero con quejas)</div></label>
+            <label class="opt-label"><input type="radio" name="P05" value="4"><div class="indicator"></div><div>4 – Tenso (ojo, hay malestar)</div></label>
+            <label class="opt-label"><input type="radio" name="P05" value="5"><div class="indicator"></div><div>5 – Muy tenso</div></label>
+          </div>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P06</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">En el último mes, el ambiente social…</div>
+          <div class="opts-grid">
+            <label class="opt-label"><input type="radio" name="P06" value="Mejoró"><div class="indicator"></div><div>Mejoró</div></label>
+            <label class="opt-label"><input type="radio" name="P06" value="Sigue igual"><div class="indicator"></div><div>Sigue igual</div></label>
+            <label class="opt-label"><input type="radio" name="P06" value="Empeoró"><div class="indicator"></div><div>Empeoró</div></label>
+          </div>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P07</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">¿Qué tanta certeza se tiene de la información?</div>
+          <div class="muted">Certeza (jerovia) ayuda a decidir si se debe verificar con otra fuente.</div>
+          <div class="opts-grid" style="margin-top:10px;">
+            <label class="opt-label"><input type="radio" name="P07" value="Alta"><div class="indicator"></div><div>Alta (vio o escuchó directo)</div></label>
+            <label class="opt-label"><input type="radio" name="P07" value="Media"><div class="indicator"></div><div>Media (mezcla de directo y comentarios)</div></label>
+            <label class="opt-label"><input type="radio" name="P07" value="Baja"><div class="indicator"></div><div>Baja (más rumor)</div></label>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- ===== SECCIÓN 2: Señales de alerta temprana ===== -->
+        <div class="section-header">
+          <span class="section-number">2</span>
+          <span>Señales de alerta temprana <span class="muted">(gatillos de semáforo)</span></span>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P08</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">Durante el último mes, ¿pasó algo de esto?</div>
+          <div class="muted">Si marca solo «G Ninguno», vaya directo a P11.</div>
+          <div class="opts-grid" style="margin-top:10px;">
+            <label class="opt-label"><input type="checkbox" data-p08 value="A"><div class="indicator"></div><div>A – Amenazas o advertencias</div></label>
+            <label class="opt-label"><input type="checkbox" data-p08 value="B"><div class="indicator"></div><div>B – Reunión con tono fuerte o discusión subida de tono</div></label>
+            <label class="opt-label"><input type="checkbox" data-p08 value="C"><div class="indicator"></div><div>C – Corte de ruta o anuncio de corte</div></label>
+            <label class="opt-label"><input type="checkbox" data-p08 value="D"><div class="indicator"></div><div>D – Protesta, manifestación o convocatoria</div></label>
+            <label class="opt-label"><input type="checkbox" data-p08 value="E"><div class="indicator"></div><div>E – Nota formal o denuncia a autoridad</div></label>
+            <label class="opt-label"><input type="checkbox" data-p08 value="F"><div class="indicator"></div><div>F – Quejas vinculadas a gestión de empresas contratistas</div></label>
+            <label class="opt-label"><input type="checkbox" data-p08 value="F2"><div class="indicator"></div><div>Quejas vinculadas a gestión de empresas fomentadas</div></label>
+            <label class="opt-label"><input type="checkbox" data-p08 value="G" id="P08G"><div class="indicator"></div><div>G – Ninguno</div></label>
+          </div>
+          <div style="margin-top:10px;">
+            <label>Otro (especifique):</label>
+            <input id="P08Otro" placeholder="Otra señal de alerta">
+          </div>
+        </div>
+
+        <div id="wrapP09" class="qcard hidden">
+          <div class="qhead"><div class="qdim">P09</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">Si marcó A, C o D: ¿qué tan cerca está de repetirse o crecer en la próxima semana?</div>
+          <div class="opts-grid">
+            <label class="opt-label"><input type="radio" name="P09" value="Baja"><div class="indicator"></div><div>Baja</div></label>
+            <label class="opt-label"><input type="radio" name="P09" value="Media"><div class="indicator"></div><div>Media</div></label>
+            <label class="opt-label"><input type="radio" name="P09" value="Alta"><div class="indicator"></div><div>Alta</div></label>
+          </div>
+        </div>
+
+        <div id="wrapP10" class="qcard hidden">
+          <div class="qhead"><div class="qdim">P10</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">¿Necesita intervención rápida?</div>
+          <div class="muted">Esta pregunta permite decisión operativa inmediata. «Rojo» se considera urgente.</div>
+          <div class="opts-grid" style="margin-top:10px;">
+            <label class="opt-label opt-green"><input type="radio" name="P10" value="Verde"><div class="indicator"></div><div>🟢 Verde – No hace falta ahora</div></label>
+            <label class="opt-label opt-yellow"><input type="radio" name="P10" value="Amarillo"><div class="indicator"></div><div>🟡 Amarillo – Conviene actuar esta semana</div></label>
+            <label class="opt-label opt-red"><input type="radio" name="P10" value="Rojo"><div class="indicator"></div><div>🔴 Rojo – Urgente hoy o mañana</div></label>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- ===== SECCIÓN 3: Tema principal del malestar ===== -->
+        <div class="section-header">
+          <span class="section-number">3</span>
+          <span>Tema principal del malestar <span class="muted">(para orientar acción)</span></span>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P11</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">¿Cuál es el tema principal hoy?</div>
+          <div class="muted">Si hay más de un tema, marque el que más se repite o el que genera más tensión.</div>
+          <select id="P11" style="margin-top:10px;">
+            <option value="">Seleccione</option>
+            <option value="Trabajo local">Trabajo local (empleo, cupos, salarios)</option>
+            <option value="Empresa contratistas">Empresa contratistas (trato, conducta, seguridad, incumplimientos)</option>
+            <option value="Camino y tránsito">Camino y tránsito (polvo, ruido, camiones, accidentes)</option>
+            <option value="Ambiente">Ambiente (agua, olor, humo, residuos, deforestación)</option>
+            <option value="Tierra y límites">Tierra y límites (servidumbre de paso, acceso, uso de la tierra)</option>
+            <option value="Compras locales y economía">Compras locales y economía (empresas proveedoras, precios)</option>
+            <option value="Relación y comunicación">Relación y comunicación (falta de información, promesas no cumplidas)</option>
+            <option value="Impacto ambiental">Impacto ambiental (contaminación, sequía, pérdida de biodiversidad)</option>
+            <option value="Impacto químicos">Impacto en el suelo y las personas por el uso de químicos</option>
+            <option value="Otro">Otro</option>
+          </select>
+          <div id="P11OtroWrap" class="hidden">
+            <label>Especifique otro tema:</label>
+            <input id="P11Otro" placeholder="Tema principal">
+          </div>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">ORIGEN</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">Este tema tiene origen del tipo…</div>
+          <div class="opts-grid">
+            <label class="opt-label"><input type="radio" name="tema_origen" value="Rumores"><div class="indicator"></div><div>Rumores</div></label>
+            <label class="opt-label"><input type="radio" name="tema_origen" value="Vivencia propia"><div class="indicator"></div><div>Vivencia propia</div></label>
+          </div>
+        </div>
+
+        <div id="wrapP14" class="qcard hidden">
+          <div class="qhead"><div class="qdim">P14</div><span class="muted">Solo si el origen es Rumor</span></div>
+          <div class="qtext">Si se trata de un rumor, ¿por dónde corre más?</div>
+          <div class="opts-grid">
+            <label class="opt-label"><input type="checkbox" data-p14 value="WhatsApp"><div class="indicator"></div><div>WhatsApp</div></label>
+            <label class="opt-label"><input type="checkbox" data-p14 value="Facebook"><div class="indicator"></div><div>Facebook</div></label>
+            <label class="opt-label"><input type="checkbox" data-p14 value="Radio local"><div class="indicator"></div><div>Radio local</div></label>
+            <label class="opt-label"><input type="checkbox" data-p14 value="Boca a boca"><div class="indicator"></div><div>Boca a boca</div></label>
+            <label class="opt-label"><input type="checkbox" data-p14 value="Reunión comunitaria"><div class="indicator"></div><div>Reunión comunitaria</div></label>
+            <label class="opt-label"><input type="checkbox" data-p14 value="Otro"><div class="indicator"></div><div>Otro</div></label>
+          </div>
+          <div id="P14OtroWrap" class="hidden">
+            <label>Especifique otro medio:</label>
+            <input id="P14Otro" placeholder="Otro medio de difusión">
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- ===== SECCIÓN 5: Acción sugerida ===== -->
+        <div class="section-header">
+          <span class="section-number">5</span>
+          <span>Acción sugerida <span class="muted">(operativa)</span></span>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P18</div><span class="qreq">Obligatoria</span></div>
+          <div class="qtext">Acción recomendada principal</div>
+          <div class="opts-grid">
+            <label class="opt-label"><input type="radio" name="P18" value="Mensaje aclaratorio y comunicación preventiva"><div class="indicator"></div><div>Mensaje aclaratorio y comunicación preventiva</div></label>
+            <label class="opt-label"><input type="radio" name="P18" value="Reunión con líderes o comisión vecinal"><div class="indicator"></div><div>Reunión con líderes o comisión vecinal</div></label>
+            <label class="opt-label"><input type="radio" name="P18" value="Visita técnica"><div class="indicator"></div><div>Visita técnica (ambiente, caminos, agua, polvo)</div></label>
+            <label class="opt-label"><input type="radio" name="P18" value="Revisión y control a contratista"><div class="indicator"></div><div>Revisión y control a contratista</div></label>
+            <label class="opt-label"><input type="radio" name="P18" value="Mesa con autoridades"><div class="indicator"></div><div>Mesa con autoridades (Muni, Gobernación, INDI, Policía)</div></label>
+            <label class="opt-label"><input type="radio" name="P18" value="Otro"><div class="indicator"></div><div>Otro</div></label>
+          </div>
+          <div id="P18OtroWrap" class="hidden">
+            <label>Especifique otra acción:</label>
+            <input id="P18Otro" placeholder="Acción recomendada">
+          </div>
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P19</div><span class="muted">Opcional</span></div>
+          <div class="qtext">Contacto local clave</div>
+          <input id="P19" placeholder="Nombre y rol del contacto">
+        </div>
+
+        <div class="qcard">
+          <div class="qhead"><div class="qdim">P20</div><span class="muted">Opcional</span></div>
+          <div class="qtext">Adjuntos</div>
+          <div class="muted">Foto, ubicación GPS</div>
+          <div class="grid3" style="margin-top:10px;">
+            <div>
+              <label>Foto</label>
+              <input type="file" id="P20Foto" accept="image/*" capture="environment" class="file-input">
+            </div>
+            <div>
+              <label>Ubicación GPS</label>
+              <button type="button" id="btnGPS" class="btn secondary gps-btn">📍 Capturar GPS</button>
+              <div id="gpsResult" class="muted" style="margin-top:6px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- ===== Semáforo resultado inmediato ===== -->
+        <div id="semaforoResult" class="semaforo-result hidden">
+          <div class="semaforo">
+            <div class="lights">
+              <div id="resGreen" class="light"></div>
+              <div id="resYellow" class="light"></div>
+              <div id="resRed" class="light"></div>
+            </div>
+            <div>
+              <div id="resTitle" class="semTitle">Semáforo</div>
+              <div id="resMeta" class="muted"></div>
+              <div id="resConf" class="muted"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comentario general -->
+        <label>Comentario general (opcional)</label>
+        <textarea id="metaComentario" placeholder="Contexto, actores, hechos, fechas, señales adicionales"></textarea>
+
+        <div class="row">
+          <button id="btnSaveLocal" class="btn secondary">💾 Guardar en el teléfono</button>
+          <button id="btnSendNow" class="btn">📤 Enviar ahora</button>
+          <button id="btnSync" class="btn secondary">🔄 Sincronizar pendientes</button>
+        </div>
+
+        <div id="formMsg"></div>
+
+        <div class="hr"></div>
+        <div class="row">
+          <div class="muted"><b>Pendientes:</b> <span id="pendingCount">0</span></div>
+          <div class="muted"><b>Última sync:</b> <span id="lastSync">-</span></div>
+        </div>
+      </section>
+
+      <!-- ================== DASHBOARD ================== -->
+      <section id="panelDash" style="display:none;">
+        <h2>Tablero</h2>
+        <p class="muted">Visible solo para usuarios autorizados. Métricas en ventana móvil y semáforo de alertas tempranas.</p>
+
+        <div class="hr"></div>
+
+        <div class="grid4">
+          <div>
+            <label>Ventana (días)</label>
+            <select id="dashWindow">
+              <option value="14">14</option>
+              <option value="30" selected>30</option>
+              <option value="60">60</option>
+              <option value="90">90</option>
+            </select>
+          </div>
+          <div>
+            <label>Tipo informante</label>
+            <select id="dashTipo">
+              <option value="">(todos)</option>
+              <option value="Miembro comunitario">Miembro comunitario</option>
+              <option value="Miembros del equipo de Paracel">Equipo Paracel</option>
+              <option value="Líder/lideresa local">Líder/lideresa local</option>
+              <option value="Autoridades municipales o departamentales">Autoridades</option>
+              <option value="Comerciante">Comerciante</option>
+              <option value="ONG">ONG</option>
+            </select>
+          </div>
+          <div>
+            <label>Comunidad</label>
+            <select id="dashComunidad">
+              <option value="">(todas)</option>
+            </select>
+          </div>
+          <div>
+            <label>Filtro / Buscar</label>
+            <input id="dashSearch" placeholder="Ej. Ambiente, Ruta…">
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="btnDash" class="btn">Actualizar tablero</button>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="semaforo">
+          <div class="lights">
+            <div id="lightGreen" class="light"></div>
+            <div id="lightYellow" class="light"></div>
+            <div id="lightRed" class="light"></div>
+          </div>
+          <div>
+            <div id="semTitle" class="semTitle">Semáforo</div>
+            <div id="semMeta" class="muted">Sin datos</div>
+            <div id="semExplain" class="muted"></div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div id="kpis" class="kpis"></div>
+
+        <div class="hr"></div>
+
+        <!-- CHARTS SECTION -->
+        <h3 class="section-title">Análisis Visual</h3>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h4>Evolución Temporal</h4>
+            <canvas id="chartTimeline"></canvas>
+          </div>
+          <div class="chart-card">
+            <h4>Alertas (Semáforo)</h4>
+            <div style="max-height: 250px; display:flex; justify-content:center;">
+              <canvas id="chartAlerts"></canvas>
+            </div>
+          </div>
+          <div class="chart-card" style="grid-column: span 2;">
+            <h4>Puntaje Agrupado por Dimensión</h4>
+            <canvas id="chartDims" style="max-height: 300px;"></canvas>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3 class="section-title">Últimos Registros Detallados (<span id="tableCount">0</span>)</h3>
+        <div id="dashTable"></div>
+
+        <div id="dashMsg"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="./idb.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
